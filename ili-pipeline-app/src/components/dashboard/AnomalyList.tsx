@@ -35,9 +35,14 @@ export function AnomalyList() {
 
   // Enrich matches with sort score
   const data = useMemo(() => {
-    let filtered = matches.filter(
-      (m) => m.match_status !== 'missing' && !m.anomalies[m.anomalies.length - 1]?.is_reference_point
-    );
+    // Pipeline already filters out reference points, but guard here too
+    let filtered = matches.filter((m) => {
+      if (m.match_status === 'missing') return false;
+      const latest = m.anomalies[m.anomalies.length - 1];
+      if (!latest) return false;
+      if (latest.is_reference_point) return false;
+      return true;
+    });
 
     if (priorityFilter.length > 0) {
       filtered = filtered.filter((m) => priorityFilter.includes(m.priority));

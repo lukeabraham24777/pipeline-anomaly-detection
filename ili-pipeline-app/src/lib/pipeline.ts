@@ -103,8 +103,24 @@ export async function runPipeline(
   store.setProcessing({ status: 'analyzing', progress: 75, message: 'Assigning GPS coordinates...' });
   await sleep(50);
 
-  // Step 4: Assign GPS coordinates to matches
-  const geoMatches = matches.map((match) => {
+  // Step 4: Filter out reference points and non-anomalies from matches.
+  // Only keep entries that represent real anomalies (not girth welds, valves, fittings, etc.)
+  const anomalyMatches = matches.filter((match) => {
+    const latest = match.anomalies[match.anomalies.length - 1];
+    // Skip if the latest anomaly is a reference point
+    if (latest.is_reference_point) return false;
+    // Skip if all anomalies in this match are reference points
+    if (match.anomalies.every((a) => a.is_reference_point)) return false;
+    // Skip if canonical type is a structural feature, not a defect
+    const nonDefectTypes = ['girth_weld', 'seam_weld', 'valve', 'fitting', 'casing'];
+    if (nonDefectTypes.includes(latest.canonical_type)) return false;
+    // Skip if zero depth, zero length, zero width AND not a meaningful anomaly
+    if (latest.depth_percent === 0 && latest.length === 0 && latest.width === 0 && latest.canonical_type === 'unknown') return false;
+    return true;
+  });
+
+  // Step 5: Assign GPS coordinates to matches
+  const geoMatches = anomalyMatches.map((match) => {
     const latestAnomaly = match.anomalies[match.anomalies.length - 1];
     const gps = distanceToGps(latestAnomaly.corrected_distance);
     return {

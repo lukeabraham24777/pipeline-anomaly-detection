@@ -12,7 +12,7 @@ import type { RunFile } from '@/types';
 import { FilePreview } from './FilePreview';
 
 const RUN_LABELS = ['Run 1 (Oldest)', 'Run 2 (Middle)', 'Run 3 (Most Recent)'];
-const DEFAULT_YEARS = [2015, 2019, 2024];
+const DEFAULT_YEARS = [2007, 2015, 2022];
 
 export function FileUploader() {
   const [files, setFiles] = useState<(RunFile | null)[]>([null, null, null]);
